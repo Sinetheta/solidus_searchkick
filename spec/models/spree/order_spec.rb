@@ -6,6 +6,7 @@ RSpec.describe Spree::Order, type: :model do
       let(:order) { create(:completed_order_with_totals) }
 
       before(:each) do
+        Spree::Product.reindex
         Spree::Product.searchkick_index.refresh
       end
 
