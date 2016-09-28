@@ -8,6 +8,7 @@ Spree::Product.class_eval do
       active: available?,
       price: price,
       currency: cost_currency,
+      sku: sku,
       conversions: orders.complete.count,
       taxon_ids: taxon_and_ancestors.map(&:id),
       taxon_names: taxon_and_ancestors.map(&:name)

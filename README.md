@@ -1,7 +1,7 @@
 Solidus + Searchkick
 ===============
 
-Add [Elasticsearch](http://elastic.co) goodies to Spree, powered by [searchkick](http://searchkick.org)
+Add [Elasticsearch](http://elastic.co) goodies to Solidus, powered by [searchkick](http://searchkick.org).
 
 Features
 --------
@@ -9,7 +9,6 @@ Features
 * Full search (keyword, in_taxon)
 * Taxons Aggregations (aggs)
 * Search Autocomplete ([Typeahead](https://twitter.github.io/typeahead.js/))
-* Added `/best` route, where best selling products are boosted in first page
 
 
 Installation
@@ -38,7 +37,20 @@ rake solidus_searchkick:install:migrations
 Documentation
 -------------
 
-By default, only the `Spree::Product` class is indexed and to control what data is indexed, override `Spree::Product#search_data` method. Call `Spree::Product.reindex` after changing this method.
+By default, only the `Spree::Product` class is indexed. The following items are indexed by default:
+* name
+* description
+* available? (indexed as `active`)
+* price (needed in order to return products that have price != nil)
+* currency
+* sku
+* orders.complete.count (indexed as `conversions`)
+* taxon_ids
+* taxon_names
+* All Properies
+* All Taxon ids by Taxonomy
+
+In order to control what data is indexed, override `Spree::Product#search_data` method. Call `Spree::Product.reindex` after changing this method.
 
 To enable or disable taxons filters, go to taxonomy form and change `filterable` boolean.
 

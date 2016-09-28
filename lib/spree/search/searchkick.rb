@@ -4,9 +4,11 @@ module Spree::Search
       @products = get_base_elasticsearch
     end
 
+    protected
+
     def get_base_elasticsearch
       curr_page = page || 1
-      Spree::Product.search(keyword_query, where: where_query, aggs: aggregations, smart_aggs: true, order: sorted, page: curr_page, per_page: per_page)
+      Spree::Product.search(keyword_query, where: where_query, aggs: aggregations, smart_aggs: true, order: sort, page: curr_page, per_page: per_page)
     end
 
     def where_query
@@ -23,9 +25,8 @@ module Spree::Search
       (keywords.nil? || keywords.empty?) ? "*" : keywords
     end
 
-    def sorted
-      order_params = {}
-      order_params
+    def sort
+      order ? order : nil
     end
 
     def aggregations
@@ -49,6 +50,7 @@ module Spree::Search
     end
 
     def prepare(params)
+      @properties[:order] = params[:order].blank? ? nil : params[:order]
       params = params.deep_symbolize_keys
       super
     end
