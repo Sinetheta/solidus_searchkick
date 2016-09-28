@@ -1,0 +1,5 @@
+languages:
+  Ruby: true
+  JavaScript: true
+exclude_paths:
+  - 'app/assets/javascripts/spree/frontend/typeahead.bundle.js'
