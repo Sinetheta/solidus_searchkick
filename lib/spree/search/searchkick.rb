@@ -1,14 +1,26 @@
 module Spree::Search
   class Searchkick < Spree::Core::Search::Base
     def retrieve_products
-      @products = get_base_elasticsearch
+      @products = get_base_search
     end
 
     protected
 
-    def get_base_elasticsearch
-      curr_page = page || 1
-      Spree::Product.search(keyword_query, where: where_query, aggs: aggregations, smart_aggs: true, order: sort, page: curr_page, per_page: per_page)
+    def get_base_search
+      current_page = page || 1
+
+      Spree::Product.search(
+        keyword_query,
+        where: where_query,
+        aggs: aggregations,
+        smart_aggs: true,
+        order: order_query,
+        limit: limit_query,
+        offest: offset_query,
+        page: current_page,
+        per_page: per_page,
+        includes: includes_query
+      )
     end
 
     def where_query
@@ -25,7 +37,7 @@ module Spree::Search
       (keywords.nil? || keywords.empty?) ? "*" : keywords
     end
 
-    def sort
+    def order_query
       order ? order : nil
     end
 
@@ -49,8 +61,19 @@ module Spree::Search
       query
     end
 
+    def includes_query
+      includes =  { master: [:currently_valid_prices] }
+      includes[:master] << :images if include_images
+      includes
+    end
+
+    def limit_query
+      limit ? limit : nil
+    end
+
     def prepare(params)
       @properties[:order] = params[:order].blank? ? nil : params[:order]
+      @properties[:limit] = params[:limit].blank? ? nil : params[:limit]
       params = params.deep_symbolize_keys
       super
     end
