@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    solidus_searchkick (0.1.0)
+    solidus_searchkick (0.1.2)
       searchkick (~> 1.2)
       solidus (~> 1.4, >= 1.4.0)
 

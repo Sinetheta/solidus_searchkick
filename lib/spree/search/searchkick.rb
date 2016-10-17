@@ -71,9 +71,14 @@ module Spree::Search
       limit ? limit : nil
     end
 
+    def offset_query
+      offset ? offset : nil
+    end
+
     def prepare(params)
       @properties[:order] = params[:order].blank? ? nil : params[:order]
       @properties[:limit] = params[:limit].blank? ? nil : params[:limit]
+      @properties[:offset] = params[:offset].blank? ? nil : params[:offset]
       params = params.deep_symbolize_keys
       super
     end
