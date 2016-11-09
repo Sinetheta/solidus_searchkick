@@ -1,5 +1,4 @@
 Spree::ProductsHelper.module_eval do
-  # TODO, will need to handle this
   def cache_key_for_products
     count = @products.count
     hash = Digest::SHA1.hexdigest(params.to_json)

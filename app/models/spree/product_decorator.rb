@@ -1,5 +1,10 @@
 Spree::Product.class_eval do
-  searchkick autocomplete: [:name]
+  # Run after initialization, allows us to process product_decorator from application before this
+  Rails.application.config.after_initialize do
+    # Check if searchkick_options have been set by the application using this gem
+    # If they have, then do not initialize searchkick on the model. If they have not, then set the defaults
+    searchkick autocomplete: [:name] unless Spree::Product.try(:searchkick_options)
+  end
 
   def search_data
     json = {
@@ -14,19 +19,7 @@ Spree::Product.class_eval do
       taxon_names: taxon_and_ancestors.map(&:name)
     }
 
-    Spree::Property.all.each do |prop|
-      json.merge!(Hash[prop.name.downcase, property(prop.name)])
-    end
-
-    Spree::Taxonomy.all.each do |taxonomy|
-      json.merge!(Hash["#{ taxonomy.name.downcase }_ids", taxon_by_taxonomy(taxonomy.id).map(&:id)])
-    end
-
     json
-  end
-
-  def taxon_by_taxonomy(taxonomy_id)
-    taxons.joins(:taxonomy).where(spree_taxonomies: { id: taxonomy_id })
   end
 
   def taxon_and_ancestors

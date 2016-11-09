@@ -30,13 +30,51 @@ Bundle your dependencies and run the installation generator:
 ```shell
 bundle
 bundle exec rails g solidus_searchkick:install
-
-OR
-
-rake solidus_searchkick:install:migrations
 ```
 
+Installing solidus_searchkick will copy over a new `spree/shared/_filters.html.erb` template. This includes a few minor changes to the default template, mainly changing a few `search` params to `filter` params to work nicely with solidus_searchkick and elasticsearch.
+
 [Install elasticsearch](https://www.elastic.co/downloads/elasticsearch)
+
+Implementation
+-------------
+Initially, you are started with a very basic filtering system which includes a price filter in order to show how the filtering works within elasticsearch. In order to add more filtering or change the price filtering, the following steps will need to be taken.
+
+1. Copy the `Spree::Core::SearchkickFilters` file from this gem and place it in `lib/spree/core/`
+2. Add it to the config load path, or require it in an initializer, e.g...
+   ```
+   # config/initializers/spree.rb
+   require 'spree/core/searchkick_filters'
+   ```
+3. Modify SearchKickFilters as needed.
+
+The `conds` for `SearchkickFilters` are similar to the `ProductFilters` in the default version of spree. Although the first parameters of each is still the label, the second item is the ElasticSerach DSL that will be used for that filter, eg... `{ range: { price: { lt: 1 } } }`
+
+Autocomplete
+-------------
+SolidusSearchkick provides autocomplete for the `name` field of your products. In order to get this working, all you need to do is add the following lines to the corresponding files:
+
+application.js
+```
+//= require spree/frontend/typeahead.bundle
+//= require spree/frontend/solidus_searchkick
+```
+
+application.css
+```
+*= require spree/frontend/solidus_searchkick
+```
+
+After that, automplete should now be working in the search box.
+
+Advanced Autocomplete
+-------------
+Documentation Coming Soon
+
+Options
+-------------
+Order
+Fields (example of overriding fields)
 
 Documentation
 -------------
@@ -51,12 +89,8 @@ By default, only the `Spree::Product` class is indexed. The following items are 
 * orders.complete.count (indexed as `conversions`)
 * taxon_ids
 * taxon_names
-* All Properies
-* All Taxon ids by Taxonomy
 
 In order to control what data is indexed, override `Spree::Product#search_data` method. Call `Spree::Product.reindex` after changing this method.
-
-To enable or disable taxons filters, go to taxonomy form and change `filterable` boolean.
 
 Testing
 -------
