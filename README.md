@@ -39,12 +39,12 @@ Installing solidus_searchkick will copy over a new `spree/shared/_filters.html.e
 Searchkick Integration
 ----------------------
 
-By default, Searchkick is initialized on the Product model in SolidusSearchkick's product_decorator with:
+By default, Searchkick is initialized on the Product model in SolidusSearchkick's `product_decorator` with:
 ```
 searchkick word_start: [:name]
 ```
 
-If you need to modify this, you can do so in your own product_decorator, by adding something like:
+If you need to modify this, you can do so in your own `product_decorator`, by adding something like:
 ```
 # app/models/spree/product_decorator.rb
 Spree::Product.class_eval do
@@ -52,8 +52,8 @@ Spree::Product.class_eval do
   ...
 end
 ```
-In this example, the `unless Spree::product.try(:searchkick_options)` conditional is needed, since by default your development environment does not cache classes and will reload them.
-Adding this condition prevents Rails from throwing an error on trying to add searchkick multiple times.
+In this example, the `unless Spree::product.try(:searchkick_options)` conditional is needed, since, by default, the development environment does not cache classes and will reload them.
+Adding this condition prevents Rails from throwing an error when reloading the product decorator and trying to add searchkick multiple times.
 
 
 Search Parameters
@@ -75,7 +75,7 @@ In order to control what data is indexed, override the `Spree::Product#search_da
 Filtering
 ---------
 
-Initially, you are started with a very basic filtering system which includes a price filter in order to show how the filtering works within elasticsearch. In order to add more filtering or change the price filtering, the following steps will need to be taken.
+Initially, you start with a very basic filtering system which includes a price filter in order to show how the filtering works with SolidusSearchkick and ElasticSearch. In order to add additional filters or change the price filter, the following steps will need to be taken:
 
 1. Copy the `Spree::Core::SearchkickFilters` file from this gem and place it in `lib/spree/core/`
 
@@ -95,6 +95,19 @@ The `conds` for `SearchkickFilters` are similar to the `ProductFilters` in the d
     [Spree.t(:under_price, price: format_price(1)),   { range: { price: { lt: 1 } } }],
     ...
   ]
+  ```
+
+4. Ensure that `Spree::Taxon#applicable_filters` returns the filters you want:
+
+  ```
+  # app/models/spree/taxon_decorator.rb
+  def applicable_filters
+    filters = []
+    ...
+    filters << Spree::Core::SearchkickFilters.price_filter if Spree::Core::SearchkickFilters.respond_to?(:price_filter)
+    ...
+    filters
+  end
   ```
 
 Autocomplete
@@ -136,10 +149,10 @@ end
 
 Searchkick Options
 ------------------
-Since SolidusSearchkick uses Searchkick to interact with ElasticSearch, it also accepts all of the Searchkick options as well.
+Since SolidusSearchkick uses Searchkick to interact with ElasticSearch, it also accepts all of the Searchkick options.
 
 You can specify a limit or offset when searching, as well as any other options provided by Searchkick.
-In order to use the options, you need to pass a `searchkick_options` hash along with your search.
+In order to use the options, all you need to do is to pass a `searchkick_options` hash along with your search.
 
 ```
 searcher = build_searcher(params.deep_merge(searchkick_options: { limit: 6, offset: 100 }))
@@ -171,7 +184,7 @@ searcher = build_searcher(params.merge(search_params))
 ElasticSearch DSL
 -----------------
 There are times where even the power of Searchkick will not be enough to get you the results you need from ElasitcSearch.
-In these cases, you can use the full power of the ElasticSearch DSL by passing in `query` param.
+In these cases, you can use the full power of the ElasticSearch DSL by passing in the `query` param.
 
 ```
 query = {
