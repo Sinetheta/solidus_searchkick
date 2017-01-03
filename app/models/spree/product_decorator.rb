@@ -3,7 +3,7 @@ Spree::Product.class_eval do
   Rails.application.config.after_initialize do
     # Check if searchkick_options have been set by the application using this gem
     # If they have, then do not initialize searchkick on the model. If they have not, then set the defaults
-    searchkick autocomplete: [:name] unless Spree::Product.try(:searchkick_options)
+    searchkick word_start: [:name] unless Spree::Product.try(:searchkick_options)
   end
 
   def search_data
@@ -30,14 +30,18 @@ Spree::Product.class_eval do
     if keywords
       Spree::Product.search(
         keywords,
-        autocomplete: true,
-        limit: 10, where: search_where
+        fields: ['name^5'],
+        match: :word_start,
+        limit: 10,
+        load: false,
+        misspellings: { below: 3 },
+        where: search_where,
       ).map(&:name).map(&:strip).uniq
     else
       Spree::Product.search(
         '*',
         where: search_where
-      ).map(&:name).map(&:strip)
+      ).map(&:name).map(&:strip).uniq
     end
   end
 

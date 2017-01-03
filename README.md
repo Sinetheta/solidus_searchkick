@@ -3,17 +3,17 @@
 [![Test Coverage](https://codeclimate.com/github/elevatorup/solidus_searchkick/badges/coverage.svg)](https://codeclimate.com/github/elevatorup/solidus_searchkick/coverage)
 
 Solidus + Searchkick
-===============
+====================
 
-Add [Elasticsearch](http://elastic.co) goodies to Solidus, powered by [searchkick](http://searchkick.org).
+Add [Elasticsearch](http://elastic.co) to Solidus, powered by [searchkick](http://searchkick.org).
 
 Features
 --------
 
-* Full search (keyword, in_taxon)
-* Taxons Aggregations (aggs)
-* Search Autocomplete ([Typeahead](https://twitter.github.io/typeahead.js/))
-
+* Search products by sku, name, description, taxon, and more out of the box.
+* Customize the product search fields to your liking.
+* Search Autocomplete by name out of the box ([Typeahead](https://twitter.github.io/typeahead.js/)).
+* Product filtering based on ElasticSearch queries.
 
 Installation
 ------------
@@ -36,23 +36,70 @@ Installing solidus_searchkick will copy over a new `spree/shared/_filters.html.e
 
 [Install elasticsearch](https://www.elastic.co/downloads/elasticsearch)
 
-Implementation
--------------
+Searchkick Integration
+----------------------
+
+By default, Searchkick is initialized on the Product model in SolidusSearchkick's product_decorator with:
+```
+searchkick word_start: [:name]
+```
+
+If you need to modify this, you can do so in your own product_decorator, by adding something like:
+```
+# app/models/spree/product_decorator.rb
+Spree::Product.class_eval do
+  searchkick word_start: [:name], callbacks: :async unless Spree::Product.try(:searchkick_options)
+  ...
+end
+```
+In this example, the `unless Spree::product.try(:searchkick_options)` conditional is needed, since by default your development environment does not cache classes and will reload them.
+Adding this condition prevents Rails from throwing an error on trying to add searchkick multiple times.
+
+
+Search Parameters
+-----------------
+
+By default, only the `Spree::Product` class is indexed. The following items are indexed by default:
+* name
+* description
+* available? (indexed as `active`)
+* price (needed in order to return products that have price != nil)
+* currency
+* sku
+* orders.complete.count (indexed as `conversions`)
+* taxon_ids
+* taxon_names
+
+In order to control what data is indexed, override the `Spree::Product#search_data` method. Call `Spree::Product.reindex` after changing this method.
+
+Filtering
+---------
+
 Initially, you are started with a very basic filtering system which includes a price filter in order to show how the filtering works within elasticsearch. In order to add more filtering or change the price filtering, the following steps will need to be taken.
 
 1. Copy the `Spree::Core::SearchkickFilters` file from this gem and place it in `lib/spree/core/`
+
 2. Add it to the config load path, or require it in an initializer, e.g...
    ```
    # config/initializers/spree.rb
    require 'spree/core/searchkick_filters'
    ```
-3. Modify SearchKickFilters as needed.
 
-The `conds` for `SearchkickFilters` are similar to the `ProductFilters` in the default version of spree. Although the first parameters of each is still the label, the second item is the ElasticSerach DSL that will be used for that filter, eg... `{ range: { price: { lt: 1 } } }`
+3. Modify SearchkickFilters as needed.
+
+The `conds` for `SearchkickFilters` are similar to the `ProductFilters` in the default version of spree/solidus. Although the first parameters of each is still the label, the second item is the ElasticSearch DSL that will be used for that filter, eg...
+
+  ```
+  conds = [
+    ...
+    [Spree.t(:under_price, price: format_price(1)),   { range: { price: { lt: 1 } } }],
+    ...
+  ]
+  ```
 
 Autocomplete
--------------
-SolidusSearchkick provides autocomplete for the `name` field of your products. In order to get this working, all you need to do is add the following lines to the corresponding files:
+------------
+By default, SolidusSearchkick provides autocomplete for the `name` field of your products. In order to get this working, all you need to do is add the following lines to the corresponding files:
 
 application.js
 ```
@@ -67,30 +114,122 @@ application.css
 
 After that, automplete should now be working in the search box.
 
+_**Note:** These requires are not added by the generator in order to give you the option to add Autocomplete instead of forcing it._
+
 Advanced Autocomplete
--------------
-Documentation Coming Soon
+---------------------
+The default autocomplete provided by solidus_searchkick is pretty basic.
 
-Options
--------------
-Order
-Fields (example of overriding fields)
+In order to modify how the autocomplete for your site works, you will first need to create a `product_decorator` if you do not already have one.
+You will then need to override the `self.autocomplete` method in order to suit your needs. Take a look at the `self.autocomplete` method in the solidus_searchkick `product_decorator` to get started.
 
-Documentation
--------------
+```
+# app/models/spree/product_decorator.rb
+Spree::Product.class_eval do
+...
+  def self.autocomplete(keywords)
+  ...
+  end
+...
+end
+```
 
-By default, only the `Spree::Product` class is indexed. The following items are indexed by default:
-* name
-* description
-* available? (indexed as `active`)
-* price (needed in order to return products that have price != nil)
-* currency
-* sku
-* orders.complete.count (indexed as `conversions`)
-* taxon_ids
-* taxon_names
+Searchkick Options
+------------------
+Since SolidusSearchkick uses Searchkick to interact with ElasticSearch, it also accepts all of the Searchkick options as well.
 
-In order to control what data is indexed, override `Spree::Product#search_data` method. Call `Spree::Product.reindex` after changing this method.
+You can specify a limit or offset when searching, as well as any other options provided by Searchkick.
+In order to use the options, you need to pass a `searchkick_options` hash along with your search.
+
+```
+searcher = build_searcher(params.deep_merge(searchkick_options: { limit: 6, offset: 100 }))
+@products = searcher.retrieve_products
+```
+
+OR
+
+```
+search_params = {
+  search: {
+    price: {
+      gt: 100
+    }
+  },
+  searchkick_options: {
+    order: {
+      price: :asc
+    },
+    limit: 100
+  }
+}
+
+searcher = build_searcher(params.merge(search_params))
+@products = searcher.retrieve_products
+```
+
+
+ElasticSearch DSL
+-----------------
+There are times where even the power of Searchkick will not be enough to get you the results you need from ElasitcSearch.
+In these cases, you can use the full power of the ElasticSearch DSL by passing in `query` param.
+
+```
+query = {
+  {
+    'bool': {
+      'must': [
+        { 'match': { 'name':   'Product 1'} }
+      ],
+      'filter': [
+        { 'range': { 'available_on': { 'gte': '2015-01-01' }}}
+      ]
+    }
+  }
+}
+
+searcher = build_searcher(query: query)
+@products = searcher.retrieve_products
+```
+
+
+Overriding and Extending Default Methods
+----------------------------------------
+
+By creating an initializer, you have the ability to override or extend any of the default methods provided by SolidusSearchkick.
+
+### Overriding a Default Method
+
+In order to override a method, simply add that method to the initializer.
+
+_(Take care when overriding methods, as you may loose some functionality if not careful)_
+```
+# config/initializers/solidus_searchkick.rb
+Spree::Search::Searchkick.class_eval do
+  def where_clause
+    # Default items for where_clause
+    where_clause = {
+      active: true
+    }
+    where_clause.merge!({taxon_ids: taxon.id}) if taxon
+
+    # Add search attributes from params[:search]
+    add_search_attributes(where_clause)
+  end
+end
+```
+
+### Extending a Default Method
+
+In order to extend a method, alias the original method, then call the aliased method when defining the new method.
+```
+# config/initializers/solidus_searchkick.rb
+Spree::Search::Searchkick.class_eval do
+  alias_method :original_where_clause, :where_clause
+  def where_clause
+    original_where_clause.merge(param1: param1, param2: param2)
+  end
+end
+```
 
 Testing
 -------
@@ -110,3 +249,9 @@ require 'solidus_searchkick/factories'
 ```
 
 Copyright (c) 2016 Jim Smith, released under the New BSD License
+
+
+Special Thanks
+--------------
+
+SolidusSearchkick was heavily inspired by [spree_searchkick](https://github.com/ronzalo/spree_searchkick), which was used as a starting point to getting Solidus to work nicely with Searchkick.
