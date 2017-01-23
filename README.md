@@ -110,6 +110,10 @@ The `conds` for `SearchkickFilters` are similar to the `ProductFilters` in the d
   end
   ```
 
+Advanced Filtering
+------------------
+Checkout out the wiki page [here](https://github.com/elevatorup/solidus_searchkick/wiki/Advanced-Filtering).
+
 Autocomplete
 ------------
 By default, SolidusSearchkick provides autocomplete for the `name` field of your products. In order to get this working, all you need to do is add the following lines to the corresponding files:
@@ -204,45 +208,6 @@ searcher = build_searcher(query: query)
 @products = searcher.retrieve_products
 ```
 
-
-Overriding and Extending Default Methods
-----------------------------------------
-
-By creating an initializer, you have the ability to override or extend any of the default methods provided by SolidusSearchkick.
-
-### Overriding a Default Method
-
-In order to override a method, simply add that method to the initializer.
-
-_(Take care when overriding methods, as you may loose some functionality if not careful)_
-```
-# config/initializers/solidus_searchkick.rb
-Spree::Search::Searchkick.class_eval do
-  def where_clause
-    # Default items for where_clause
-    where_clause = {
-      active: true
-    }
-    where_clause.merge!({taxon_ids: taxon.id}) if taxon
-
-    # Add search attributes from params[:search]
-    add_search_attributes(where_clause)
-  end
-end
-```
-
-### Extending a Default Method
-
-In order to extend a method, alias the original method, then call the aliased method when defining the new method.
-```
-# config/initializers/solidus_searchkick.rb
-Spree::Search::Searchkick.class_eval do
-  alias_method :original_where_clause, :where_clause
-  def where_clause
-    original_where_clause.merge(param1: param1, param2: param2)
-  end
-end
-```
 
 Testing
 -------
