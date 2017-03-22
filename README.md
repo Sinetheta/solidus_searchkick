@@ -151,6 +151,18 @@ Spree::Product.class_eval do
 end
 ```
 
+Fields and Boosting
+-------------------
+With SolidusSearchkick, you can include a list of fields that you would like to search on. This list can also include boosted fields the same way that Searchkick can. You can learn more about Searchkick boosting [here](https://github.com/ankane/searchkick#boosting).
+
+In order to add the fields, pass in an array of the fields:
+
+```
+fields = ['name^99', :description, ...]
+searcher = build_searcher(params.merge(fields: fields))
+@products = searcher.retrieve_products
+```
+
 Searchkick Options
 ------------------
 Since SolidusSearchkick uses Searchkick to interact with ElasticSearch, it also accepts all of the Searchkick options.

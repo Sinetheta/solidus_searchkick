@@ -38,6 +38,7 @@ module Spree::Search
           per_page: per_page,
         }
 
+        search_options.merge!(fields: fields) if fields
         search_options.merge!(searchkick_options)
         search_options.deep_merge!(includes: includes_clause)
 
@@ -127,6 +128,7 @@ module Spree::Search
     def prepare(params)
       @properties[:query] = params[:query].blank? ? nil : params[:query]
       @properties[:filters] = params[:filter].blank? ? nil : params[:filter]
+      @properties[:fields] = params[:fields].blank? ? nil : params[:fields]
       @properties[:searchkick_options] = params[:searchkick_options].blank? ? {} : params[:searchkick_options].deep_symbolize_keys
       params = params.deep_symbolize_keys
       super
