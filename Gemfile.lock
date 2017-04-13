@@ -1,9 +1,9 @@
 PATH
   remote: .
   specs:
-    solidus_searchkick (0.3.0)
-      searchkick (~> 1.2)
-      solidus (~> 1.4, >= 1.4.0)
+    solidus_searchkick (0.3.2)
+      searchkick (>= 1.2)
+      solidus (>= 1.4.0)
 
 GEM
   remote: https://rubygems.org/
