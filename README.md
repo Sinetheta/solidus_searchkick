@@ -41,19 +41,29 @@ Searchkick Integration
 
 By default, Searchkick is initialized on the Product model in SolidusSearchkick's `product_decorator` with:
 ```
-searchkick word_start: [:name]
+searchkick index_name: ..., word_start: [:name]
 ```
 
 If you need to modify this, you can do so in your own `product_decorator`, by adding something like:
 ```
 # app/models/spree/product_decorator.rb
 Spree::Product.class_eval do
-  searchkick word_start: [:name], callbacks: :async unless Spree::Product.try(:searchkick_options)
+  searchkick index_name: ..., word_start: [:name], callbacks: :async unless Spree::Product.try(:searchkick_options)
   ...
 end
 ```
 In this example, the `unless Spree::product.try(:searchkick_options)` conditional is needed, since, by default, the development environment does not cache classes and will reload them.
 Adding this condition prevents Rails from throwing an error when reloading the product decorator and trying to add searchkick multiple times.
+
+#### Index Name
+In version 0.3.1, the index_name option was added. It defaults to
+```
+"#{Rails.application.class.parent_name.parameterize.underscore}_spree_products_#{Rails.env}"
+```
+
+If you need are upgrading from a version of SolidusSearchkick prior to version 0.3.1, you will need to either:
+- reindex all of your products (which will build the index with the new name)
+- update your product_decorator to use the index_name currently being used
 
 
 Search Parameters
