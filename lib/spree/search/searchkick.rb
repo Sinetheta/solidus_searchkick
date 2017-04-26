@@ -83,7 +83,7 @@ module Spree::Search
       applicable_filters = {}
 
       # Find filter method definition from filters passed in
-      filters.each do |filter_param|
+      filters.to_a.each do |filter_param|
         search_filter, search_labels = filter_param
         filter = all_filters.find { |filter| filter[:scope] == search_filter.to_sym }
         applicable_filters[search_filter.to_sym] = filter[:conds].find_all { |filter_condition| search_labels.include?(filter_condition.first) }
