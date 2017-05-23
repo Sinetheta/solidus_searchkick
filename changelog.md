@@ -1,3 +1,6 @@
+# 0.3.4
+Updated cache_key_for_products (thanks @Sinetheta)
+
 # 0.3.3
 Updates default indexed currency to `Spree::Config.currency` instead of the products `cost_currency`.
 
