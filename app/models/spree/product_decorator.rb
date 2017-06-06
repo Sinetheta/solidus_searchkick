@@ -1,10 +1,5 @@
 Spree::Product.class_eval do
-  # Run after initialization, allows us to process product_decorator from application before this
-  Rails.application.config.after_initialize do
-    # Check if searchkick_options have been set by the application using this gem
-    # If they have, then do not initialize searchkick on the model. If they have not, then set the defaults
-    searchkick index_name: "#{Rails.application.class.parent_name.parameterize.underscore}_spree_products_#{Rails.env}", word_start: [:name] unless Spree::Product.try(:searchkick_options)
-  end
+  searchkick SolidusSearchkick::Config.product_searchkick_options
 
   def search_data
     json = {
