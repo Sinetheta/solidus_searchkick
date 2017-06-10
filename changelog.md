@@ -1,4 +1,5 @@
-# 0.4.0
+# 1.0.0
+Update Searchkick dependency
 Add `SolidusSearchkick::Config` for storing solidus_searchkick options.
 - `product_searchkick_options` is a searchkick options hash used for indexing spree products.
 

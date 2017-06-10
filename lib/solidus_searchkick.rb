@@ -1,4 +1,5 @@
 require 'spree_core'
+require 'searchkick'
 require 'solidus_searchkick/config'
 require 'solidus_searchkick/engine'
 require 'solidus_searchkick/railtie' if defined?(Rails)
